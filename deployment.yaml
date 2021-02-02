@@ -14,15 +14,6 @@ spec:
         gcp-auth-skip-secret: "false"
     spec:
       serviceAccountName: default
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-            - matchExpressions:
-              - key: tobe
-                operator: In
-                values:
-                - "patched"
       containers:
       - name: product1service1
         image: tobepatched
