@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: product1service1
+  namespace: tobepatched
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: product1service1
+  template:
+    metadata:
+      labels:
+        app: product1service1
+        gcp-auth-skip-secret: "false"
+    spec:
+      serviceAccountName: default
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: tobe
+                operator: In
+                values:
+                - "patched"
+      containers:
+      - name: product1service1
+        image: tobepatched
+        ports:
+        - containerPort: 5000
+          name: http-port
+        - containerPort: 5001
+          name: https-port
+        env:
+        - name: PORT
+          value: "5000"
+        - name: "ASPNETCORE_ENVIRONMENT"
+          value: "tobepatched"
+        - name: product1service1dbconnstring
+          valueFrom:
+            secretKeyRef:
+              name: product1service1dbconnstring
+              key: product1service1dbconnstring
+        resources:
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+      - name: cloud-sql-proxy
+        image: gcr.io/cloudsql-docker/gce-proxy:1.17
+        command:
+          - "/cloud_sql_proxy"
+          # - "-ip_address_types=PRIVATE"
+          # MySQL: 3306, Postgres: 5432, SQLServer: 1433
+          - "-instances=rb-environ-nonprod-prj1:europe-west1:rb-environ-nonprod-dev-csqlpgew1i1=tcp:5432"
+        securityContext:
+          runAsNonRoot: true
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "150m"
